@@ -15,37 +15,52 @@
       :header-row-class-name="(f) => 'table__header'"
       :header-cell-class-name="(f) => 'table__header__cell'"
     >
-      <template v-for="col in columns" :key="col.prop">
-        <el-table-column
-          v-if="!col.searchable"
-          :column-key="col.prop"
-          v-bind="col"
-        />
-        <el-table-column
-          v-else
-          :label="col.label"
-          :column-key="col.prop"
-          :filters="col.filters"
-          :sortable="col.sortable"
-        >
-          <el-table-column :prop="col.prop" :width="col.width">
-            <template #header="{ column }">
-              <input
-                type="text"
-                class="header-search-text"
-                :value="state.searched[column.columnKey]"
-                @change="searchChanged(column, $event)"
-              />
-            </template>
+      <slot>
+        <template v-for="col in columns" :key="col.prop">
+          <el-table-column
+            v-if="!col.searchable"
+            :column-key="col.prop"
+            :filters="col.filters || []"
+            :sortable="col.sortable"
+            :sort-method="(f) => f"
+            :label-class-name="`${col.filters ? 'filters' : 'no-filters'} ${
+              col.sortable ? 'sortable' : 'no-sortable'
+            }`"
+            v-bind="col"
+          />
+          <el-table-column
+            v-else
+            :label="col.label"
+            :column-key="col.prop"
+            :filters="col.filters || []"
+            :sortable="col.sortable"
+            :label-class-name="`${col.filters ? 'filters' : 'no-filters'} ${
+              col.sortable ? 'sortable' : 'no-sortable'
+            }`"
+            :sort-method="(f) => f"
+          >
+            <el-table-column :prop="col.prop" :width="col.width">
+              <template #header="{ column }">
+                <el-input
+                  clearable
+                  v-model.lazy="state.searched[column.property]"
+                  @change="searchChanged(column.property, $event)"
+                >
+                  <template #append>
+                    <el-button icon="el-icon-search"></el-button>
+                  </template>
+                </el-input>
+              </template>
+            </el-table-column>
           </el-table-column>
-        </el-table-column>
-      </template>
+        </template>
+      </slot>
     </el-table>
     <el-pagination
       :total="totalData"
       :hide-on-single-page="hidePagination"
       v-bind="paginationProps"
-      v-model:currentSize="state.size"
+      v-model:pageSize="state.size"
       v-model:currentPage="state.page"
       @size-change="sizeChanged"
       @current-change="pageChanged"
@@ -55,14 +70,21 @@
 </template>
 
 <script>
-import { watch } from "@vue/runtime-core";
+import { nextTick, watch } from "@vue/runtime-core";
 import { reactive, ref } from "@vue/reactivity";
-import { ElTable, ElTableColumn, ElPagination } from "element-plus";
+import {
+  ElTable,
+  ElTableColumn,
+  ElInput,
+  ElButton,
+  ElPagination,
+} from "element-plus";
 export default {
   name: "CustomTable",
-  components: { ElTable, ElTableColumn, ElPagination },
+  components: { ElTable, ElTableColumn, ElInput, ElButton, ElPagination },
   emits: [
     "row-click",
+    "is-finished",
     "table-change",
     "sort-change",
     "size-change",
@@ -89,7 +111,6 @@ export default {
     };
     const rowClick = (row, column, event) => {
       emit("row-click", { ...row });
-      resetTable();
     };
     const pageChanged = (page) => {
       emit("page-change", page);
@@ -101,24 +122,30 @@ export default {
       const { column, order } = sort;
       const newSort = !column ? {} : { key: column.columnKey, order };
       state.sorted = newSort;
-      emit("sort-change", { ...state.sorted });
+      emit("sort-change", { ...newSort });
     };
     const filterChanged = (filter) => {
       const [key] = Object.keys(filter);
       const value = filter[key];
       if (typeof value !== "object") return;
+      const newFilterd = { ...state.filtered };
       if (!value.length) {
-        delete state.filtered[key];
+        delete newFilterd[key];
       } else {
-        state.filtered[key] = value;
+        newFilterd[key] = value;
       }
-      emit("filter-change", { key, value }, { ...state.filtered });
+      state.filtered = newFilterd;
+      emit("filter-change", { key, value }, { ...newFilterd });
     };
-    const searchChanged = (column, event) => {
-      const { property: key } = column;
-      const { value } = event.target;
-      state.searched[key] = value;
-      emit("search-change", { key, value }, { ...state.searched });
+    const searchChanged = (key, value) => {
+      const newSearched = { ...state.searched };
+      if (!value) {
+        delete newSearched[key];
+      } else {
+        newSearched[key] = value;
+      }
+      state.searched = newSearched;
+      emit("search-change", { key, value }, { ...newSearched });
     };
 
     watch(
@@ -133,7 +160,14 @@ export default {
         emit("table-change", { ...state });
       }
     );
-
+    watch(
+      () => props.data,
+      () => {
+        nextTick(function () {
+          emit("is-finished", tableRef.value);
+        });
+      }
+    );
     watch(
       () => props.forceUpdate,
       () => {
@@ -193,11 +227,26 @@ export default {
   &__table {
     .table__header {
       &__cell {
+        border-bottom: 0;
         .cell {
           display: flex;
           align-items: center;
-          align-content: center;
-          justify-content: space-between;
+          .caret-wrapper {
+            margin-left: auto;
+          }
+          .el-table__column-filter-trigger {
+            display: none;
+          }
+        }
+        .cell.no-sortable {
+          .el-table__column-filter-trigger {
+            margin-left: auto;
+          }
+        }
+        .cell.filters {
+          .el-table__column-filter-trigger {
+            display: inline-block;
+          }
         }
       }
       .header-search-text {
@@ -214,4 +263,6 @@ export default {
   &__pagination {
   }
 }
+</style>
+<style lang="scss" scoped>
 </style>

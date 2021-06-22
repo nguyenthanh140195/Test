@@ -11,6 +11,8 @@
     @sort-change="sortChanged"
     @filter-change="filterChanged"
     @search-change="searchChanged"
+    @table-change="tableChanged"
+    @is-finished="isFinished"
   />
 </template>
 
@@ -20,22 +22,28 @@ export default {
   components: { CustomTable },
   setup() {
     const rowClick = (row) => {
-      console.log("rowClick", row);
+      // console.log("rowClick", row);
     };
     const sizeChanged = (size) => {
-      console.log("size-change", size);
+      // console.log("size-change", size);
     };
     const pageChanged = (page) => {
-      console.log("page-change", page);
+      // console.log("page-change", page);
     };
     const sortChanged = (sort) => {
-      console.log("sort-change", sort);
+      // console.log("sort-change", sort);
     };
     const filterChanged = (fil, filter) => {
-      console.log("filterChanged", fil, filter);
+      // console.log("filterChanged", fil, filter);
     };
     const searchChanged = (sea, search) => {
-      console.log("searchChanged", sea, search);
+      // console.log("searchChanged", sea, search);
+    };
+    const tableChanged = (tableState) => {
+      console.log("tableChanged", tableState);
+    };
+    const isFinished = (tableRef) => {
+      console.log("isFinished", tableRef);
     };
     return {
       rowClick,
@@ -44,6 +52,8 @@ export default {
       pageChanged,
       filterChanged,
       searchChanged,
+      tableChanged,
+      isFinished,
     };
   },
   data() {
