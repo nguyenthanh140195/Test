@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Table from '../views/Table.vue'
 import Chart from '../views/Chart.vue'
+import TestJQ from '../views/TestJQ.vue'
 import Test from '../views/Test.vue'
 
 
@@ -23,8 +24,8 @@ const routes = [
   },
   {
     path: '/test',
-    name: 'Test',
-    component: Test
+    name: 'TestJQ',
+    component: TestJQ
   },
   {
     path: '/about',

@@ -1,6 +1,7 @@
 
 <template>
   <custom-table
+    ref="tableRef"
     :totalData="totalData"
     :data="tableData"
     :columns="tableColumns"
@@ -14,13 +15,16 @@
     @table-change="tableChanged"
     @is-finished="isFinished"
   />
+  <button @click="resetTable">Reset</button>
 </template>
 
 <script>
+import { ref } from "vue";
 import CustomTable from "../components/CustomTable.vue";
 export default {
   components: { CustomTable },
   setup() {
+    const tableRef = ref(null);
     const rowClick = (row) => {
       // console.log("rowClick", row);
     };
@@ -45,7 +49,11 @@ export default {
     const isFinished = (tableRef) => {
       console.log("isFinished", tableRef);
     };
+    const resetTable = () => {
+      tableRef.value.resetTable();
+    };
     return {
+      tableRef,
       rowClick,
       sortChanged,
       sizeChanged,
@@ -54,6 +62,7 @@ export default {
       searchChanged,
       tableChanged,
       isFinished,
+      resetTable,
     };
   },
   data() {

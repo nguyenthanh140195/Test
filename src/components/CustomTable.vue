@@ -184,6 +184,7 @@ export default {
       sortChanged,
       filterChanged,
       searchChanged,
+      resetTable,
     };
   },
   props: {
